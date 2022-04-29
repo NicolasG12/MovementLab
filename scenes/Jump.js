@@ -30,6 +30,14 @@ class Jump extends Phaser.Scene {
         this.cloud02 = this.physics.add.sprite(200, 200, 'platformer_atlas', 'cloud_2');
         this.cloud02.body.setAllowGravity(false).setVelocityX(45);
 
+        this.clouds = this.add.group();
+        this.clouds.add(this.cloud01);
+        this.clouds.add(this.cloud02);
+        this.cloud01.body.immovable = true;
+        this.cloud02.body.immovable = true;
+        // add physics collider
+       
+
         // make ground tiles group
         this.ground = this.add.group();
         for(let i = 0; i < game.config.width; i += tileSize) {
@@ -51,10 +59,18 @@ class Jump extends Phaser.Scene {
             this.ground.add(groundTile);
         }
 
+        // challenge: vertical wall
+        for(let i = tileSize*2; i < game.config.width-tileSize*13; i += tileSize) {
+            let groundTile = this.physics.add.sprite(game.config.width - tileSize*9, i, 'platformer_atlas', 'block').setScale(SCALE).setOrigin(0);
+            groundTile.body.immovable = true;
+            groundTile.body.allowGravity = false;
+            this.ground.add(groundTile);
+        }
+
         // set up my alien son 👽
         this.alien = this.physics.add.sprite(game.config.width/2, game.config.height/2, 'platformer_atlas', 'front').setScale(SCALE);
         this.alien.setMaxVelocity(this.MAX_X_VEL, this.MAX_Y_VEL);
-
+        this.alien.setBounce(0.2);
         // add arrow key graphics as UI
         this.upKey = this.add.sprite(64, 32, 'arrowKey');
 		this.leftKey = this.add.sprite(32, 64, 'arrowKey');
@@ -70,6 +86,7 @@ class Jump extends Phaser.Scene {
 
         // add physics collider
         this.physics.add.collider(this.alien, this.ground);
+        this.physics.add.collider(this.alien, this.clouds);
         
 
         // set up Scene switcher
@@ -107,9 +124,20 @@ class Jump extends Phaser.Scene {
         // note: there is unfortunately no .justDown property in Phaser's cursor object
         if(this.alien.body.touching.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
             // set jump velocity here
-
+            this.alien.setVelocityY(-1000);
 
             this.upKey.tint = 0xFACADE;
+        } else {
+            this.upKey.tint = 0xFFFFFF;
+        }
+
+        // challenge
+        if(this.alien.body.touching.right && cursors.up.isDown) {
+            // set jump velocity here
+            this.alien.setVelocity(-300, -1000);
+            this.upKey.tint = 0xFACADE;
+        } else if (this.alien.body.touching.left) {
+            this.alien.setVelocity(300, -1000);
         } else {
             this.upKey.tint = 0xFFFFFF;
         }
